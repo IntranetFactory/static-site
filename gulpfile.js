@@ -179,7 +179,10 @@ gulp.task('server', function () {
     },
     port: config.server.port,
     notify: config.server.notify,
-    open: config.server.open
+    open: config.server.open,
+    snippetOptions: {
+        blacklist: ['**/*?disable-browsersync']
+    }
   });
 });
 

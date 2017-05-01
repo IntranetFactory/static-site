@@ -9,7 +9,7 @@ module.exports = {
       title: 'Static Site',
       tagline: 'Static site generator utilizing Gulp and Metalsmith',     
       url: envDev ? 'localhost:4000' : 'https://S1SYPHOS.github.io',
-      baseurl: envDev ? '' : '/', // sub-directory, eg name.github.io/sub-directory    
+      baseurl: envDev ? '' : '', // sub-directory, eg name.github.io/sub-directory    
       version: '0.1.0'
     }
   },
