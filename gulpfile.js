@@ -1,124 +1,271 @@
 'use strict';
 
-var gulp = require('gulp');
-var minifycss = require('gulp-minify-css');
-var concat = require('gulp-concat');
-var browserSync = require('browser-sync').create();
-var sass = require('gulp-sass');
-var browserify = require('browserify');
-var uglify = require('gulp-uglify');
-var source = require('vinyl-source-stream');
-var buffer = require('vinyl-buffer');
-var globby = require('globby');
-var through = require('through2');
-var gutil = require('gulp-util');
-var sourcemaps = require('gulp-sourcemaps');
-
-// Import our configured Metalsmith instance
-var metalsmith = require("./metalsmith.js");
-
-// Assets and paths from ./site.json
-var site = require("./site.json");
-var assetPaths = site.assets.paths;
-var globs = site.assets.globs;
-var destinationDir = site.destination;
-var sourceDir = site.source;
-var minified = site.minified;
-
-/**
- * The default gulp task.
- *
- * */
-gulp.task('default', ['browser-sync', 'metalsmith']);
+var
+  browserSync = require('browser-sync').create(),
+  cache = require('gulp-memory-cache'),
+  changed = require('gulp-changed'),
+  concat = require('gulp-concat'),
+  config = require('./config'),
+  eslint = require('gulp-eslint'),
+  exec = require('child_process').exec,
+  ghPages = require('gulp-gh-pages'),
+  gulp = require('gulp'),
+  gulpif = require('gulp-if'),
+  imagemin = require('gulp-imagemin'),
+  minify = require('gulp-clean-css'),
+  named = require('vinyl-named'),
+  plumber = require('gulp-plumber'),
+  pngquant = require('imagemin-pngquant'),
+  postcss = require('gulp-postcss'),
+  prefix = require('autoprefixer'),
+  reporter = require('postcss-reporter'),
+  sass = require('gulp-sass'),
+  size = require('gulp-size'),
+  syntax_scss = require('postcss-scss'),
+  uglify = require('gulp-uglify');
 
 
-/**
- * Set the browserSync defaults and start the watch process.
- *
+
+/*
+ * `gulp make:styles` - compiles sass into css & minifies it (production)
  */
-gulp.task('browser-sync', function() {
-    browserSync.init({
-        server: {
-            baseDir: destinationDir
-        }
-    });
-    gulp.watch('./templates/**/**/*.hbs',  ['metalsmith']);
-    gulp.watch(sourceDir+'/**/**/*.hbs',   ['metalsmith']);
-    gulp.watch(sourceDir+'/js/*.js',    ['metalsmith']);
-    gulp.watch(sourceDir+'/css/*.scss', ['metalsmith']);
+
+gulp.task('make:styles', function () {
+
+  var onError = function (err) {
+    console.log(err);
+    this.emit('end');
+  };
+
+  return gulp.src(config.assets.source + '/styles/*.scss')
+    .pipe(plumber({
+      errorHandler: onError
+    }))
+    .pipe(sass({
+      precision: 10, // https://github.com/sass/sass/issues/1122
+      includePaths: config.styles.include
+    }))
+    .pipe(postcss([
+  prefix({
+        browsers: config.styles.prefix
+      })
+   ]))
+    .pipe(gulpif(!config.envDev, minify()))
+    .pipe(size({
+      gzip: true,
+      showFiles: true
+    }))
+    .pipe(gulp.dest(config.assets.build + '/styles'))
+    .pipe(browserSync.stream());
+});
+
+gulp.task('styles', gulp.series(
+  'make:styles'
+));
+
+
+
+// SCRIPTS
+
+/*
+ * `gulp lint:scripts` - lints javascript using eslint & caches results (config under eslintConfig in package.json)
+ */
+
+gulp.task('lint:scripts', function () {
+  return gulp.src(config.assets.source + '/scripts/**/*.js', {
+      since: gulp.lastRun('lint:scripts')
+    })
+    // For more options, see http://eslint.org/docs/rules/
+    // For more environments, see http://eslint.org/docs/user-guide/configuring.html#specifying-environments
+    .pipe(eslint())
+    .pipe(eslint.format())
 });
 
 
-/**
- * Process Sass
- *
+/*
+ * `gulp make:scripts` - compiles / concatenates javascript & minifies it (production)
  */
-gulp.task('css', function() {
-    return gulp.src(globs.sass)
-        .pipe(sass().on('error', sass.logError))
-        .pipe(minifycss())
-        .pipe(concat(minified.css))
-        .pipe(gulp.dest(assetPaths.css));
+
+gulp.task('make:scripts', function () {
+
+  return gulp.src([
+      './node_modules/jquery/dist/jquery.js',
+      './node_modules/tether/dist/js/tether.js',    
+      config.assets.source + '/scripts/*.js'
+    ], {
+      since: cache.lastMtime('concatJS')
+    })
+    .pipe(cache('concatJS'))
+    .pipe(concat('scripts.js'))
+    .pipe(gulpif(!config.envDev, uglify()))
+    .pipe(size({
+      gzip: true,
+      showFiles: true
+    }))
+    .pipe(gulp.dest(config.assets.build + '/scripts'))
+    .pipe(browserSync.stream());
+});
+
+gulp.task('scripts', gulp.series(
+  // 'lint:scripts',
+  'make:scripts'
+));
+
+
+
+// IMAGES
+
+/*
+ * `gulp images` - compressing images (unless they already got compressed)
+ */
+
+gulp.task('images', function () {
+  return gulp.src(config.assets.source + '/images/**/*')
+    .pipe(changed(config.assets.build + '/images'))
+    .pipe(imagemin({
+      progressive: true,
+      use: [pngquant()]
+    }))
+    .pipe(size({
+      showFiles: true
+    }))
+    .pipe(gulp.dest(config.assets.build + '/images'))
+    .pipe(browserSync.stream());
 });
 
 
-/**
- * Flatten all javascript dependencies.
- *
+
+// FONTS
+
+/*
+ * `gulp fonts`
  */
-gulp.task('build-deps', function() {
-    return gulp.src(globs.vendor)
-        .pipe(concat(minified.jsdependencies))
-        .pipe(gulp.dest(assetPaths.jsbin));
+
+gulp.task('fonts', function () {
+  return gulp.src(config.assets.source + '/fonts/**/*')
+    .pipe(changed(config.assets.build + '/fonts'))
+    .pipe(gulp.dest(config.assets.build + '/fonts'))
+    .pipe(browserSync.stream());
 });
 
 
-/**
- * Bundle all the files you need in browserify.
- *
- * @note: This will browserify all the files you have listed in assetPaths.scripts
- * and minify them into the file you have listed in minified.browserify.
- * See: https://github.com/gulpjs/gulp/blob/master/docs/recipes/browserify-with-globs.md
+
+// HTML
+
+/*
+ * `gulp html` - runs the Metalsmith build script to build the site
  */
-gulp.task('browserify', function () {
 
-    var bundledStream = through();
+gulp.task('html', function (cb) {
+  exec('node ./generate.js', function (err, stdout, stderr) {
+    console.log(stdout);
+    console.log(stderr);
+    cb(err);
+  });
+})
 
-    bundledStream
-        .pipe(source(minified.browserify))
-        .pipe(buffer())
-        .pipe(sourcemaps.init({loadMaps: true}))
-        .pipe(uglify())
-        .on('error', gutil.log)
-        .pipe(sourcemaps.write('./'))
-        .pipe(gulp.dest(assetPaths.jsbin));
 
-    globby(globs.scripts, function(err, entries) {
-        if (err) {
-            bundledStream.emit('error', err);
-            return;
-        }
 
-        var b = browserify({
-            entries: entries,
-            debug: true
-        });
+// SERVER
 
-        b.bundle().pipe(bundledStream);
-    });
+/*
+ * gulp server - starts a local development server
+ */
 
-    return bundledStream;
+gulp.task('server', function () {
+  browserSync.init({
+    server: {
+      baseDir: config.paths.build,
+    },
+    port: config.server.port,
+    notify: config.server.notify,
+    open: config.server.open
+  });
 });
 
 
-/**
- * Start the Metalsmith build.
- *
+// WATCH TASKS
+
+/*
+ * `gulp watch` - watches for changes, recompiles & injects html + assets
  */
-gulp.task('metalsmith', ['css', 'browserify'], function(){
-   metalsmith.build(function(err){
-       if(err) throw err;
-       browserSync.reload();
-   });
+
+gulp.task('watch:styles', function () {
+  gulp.watch(
+    config.assets.source + '/styles/**/*.scss',
+    gulp.series('styles')
+  );
 });
 
+gulp.task('watch:scripts', function () {
+  gulp.watch(
+    config.assets.source + '/scripts/**/*.js',
+    gulp.series('scripts')
+  );
+});
+
+gulp.task('watch:images', function () {
+  gulp.watch(
+    config.assets.source + '/images/**/*',
+    gulp.series('images')
+  );
+});
+
+gulp.task('watch:code', function () {
+
+  // https://github.com/BrowserSync/browser-sync/issues/711
+  function reload(done) {
+    browserSync.reload();
+    done();
+  };
+
+  gulp.watch([
+  'site/**/*',
+  '_layouts/**/*',
+  'gulpfile.js',
+  'config.js'
+  ], gulp.series('html', reload));
+});
+
+gulp.task('watch', gulp.parallel(
+  'watch:styles',
+  'watch:scripts',
+  'watch:images',
+  'watch:code'
+));
+
+
+
+// DEPLOY
+
+/*
+ * `gulp deploy` - pushes site content onto a remote repository
+ */
+
+gulp.task('deploy', function () {
+  return gulp.src(config.paths.build + '/**/*')
+    .pipe(ghPages());
+});
+
+
+
+// GENERAL TASKS
+
+gulp.task('assets', gulp.parallel(
+  'styles',
+  'scripts',
+  'images'
+));
+
+gulp.task('build', gulp.series(
+  'assets',
+  'html'
+));
+
+gulp.task('default', gulp.series(
+  'build',
+  gulp.parallel(
+    'server',
+    'watch'
+  )
+));

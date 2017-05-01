@@ -1,0 +1,17 @@
+{% extends 'document.html' %}
+
+{% block content %}
+
+  {% include 'partials/menu.html' %} 
+  
+  {% include 'partials/header.html' %}
+
+      <div>
+        <h1>{{ title }}</h1>
+        {{ contents }}
+      </div>
+
+{% include 'partials/footer.html' %} 
+
+{% endblock %}
+    

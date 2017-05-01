@@ -1,0 +1,27 @@
+<head> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    {% if title == 'Home' %}
+      {{ site.title }} &middot; {{ site.description }}
+    {% else %}
+      {{ title }} &middot; {{ site.title }}
+    {% endif %}
+  </title>
+
+  <!-- CSS -->
+  {% if envDev %}
+  <link href="{{ site.baseurl }}/assets/styles/styles.css" rel="stylesheet" type="text/css"/>
+  {% else %}
+  <link href="{{ site.baseurl }}/{{ fingerprint.styles_css }}" rel="stylesheet" type="text/css"/>
+  {% endif %}
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ site.baseurl }}/assets/images/apple-touch-icon-precomposed.png">
+  <link rel="shortcut icon" href="{{ site.baseurl }}/assets/images/apple-touch-icon-precomposed.png">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ site.baseurl }}/atom.xml">
+</head>
