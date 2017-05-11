@@ -15,7 +15,17 @@ This site generator includes the following features:
 - [Liquid](https://github.com/leizongmin/tinyliquid) - an awesome, Django/Jinja-like template engine for node.js (similar to Jekyll's [Liquid](http://shopify.github.io/liquid/))
 
 
-### Workflow
+## How to use
+
+### To install for first time
+
+- Download a clone of the repo to your local harddrive
+- Open terminal / commandline
+- Type in `cd <path to your folder within your user directory>`
+- `npm install` will install everything (takes a few moments)
+- Continue below with `npm start` to start the website and local webserver
+
+### To work with existing installation
 
 `npm start` - Compiles assets & html, launches development server:
 - compiles styles & scripts are being compiled & concatenated
