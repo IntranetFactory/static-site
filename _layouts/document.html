@@ -10,9 +10,9 @@
     {% endblock %}
  
   {% if envDev %}
-  <script src="{{ site.baseurl }}/assets/scripts/scripts.js"></script>
+  <script src="{{ site.baseurl }}/assets/scripts/scripts.js" defer></script>
   {% else %}
-  <script src="{{ site.baseurl }}/{{ fingerprint.scripts_js }}"></script>
+  <script src="{{ site.baseurl }}/{{ fingerprint.scripts_js }}" defer></script>
   {% endif %}
 
 </body>
