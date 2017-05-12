@@ -1,71 +1,74 @@
----
-title: Locations
-layout: page.html
+--- 
+title: Locations 
+layout: page.html 
 ---
 
 <div class="container">
-        <h2>Dismissal Alert Messages</h2>
-        <button>Send Message</button>
-        <div class="alert alert-success alert-dismissable" role="alert">
-    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            Success! message sent successfully.
-        </div>
+  <h2>Dismissal Alert Messages</h2>
+  <button>Send Message</button>
+  <div class="alert alert-success alert-dismissable" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button> Success! message sent successfully.
+  </div>
 
-    </div>
+</div>
 
 <script>
-$(document).ready(function(){
-    $('button').click(function(){
-        $('.alert').show()
-    }) 
-});</script>
+  window.addEventListener('DOMContentLoaded', function() {
+    (function($) {      
+        $('button').click(function() {
+          $('.alert').show()
+        })      
+    })(jQuery);
+  });
+</script>
 
 <style>
-.alert{
+  .alert {
     display: none;
-}</style>
+  }
+</style>
 
 
 <div class="container">
 
 
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>First Name</th>
-      <th>Last Name</th>
-      <th>Username</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>Otto</td>
-      <td>@mdo</td>
-    </tr>
-    <tr>
-      <th scope="row">2</th>
-      <td>Jacob</td>
-      <td>Thornton</td>
-      <td>@fat</td>
-    </tr>
-    <tr>
-      <th scope="row">3</th>
-      <td colspan="2">Larry the Bird</td>
-      <td>@twitter</td>
-    </tr>
-  </tbody>
-</table>
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Username</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">1</th>
+        <td>Mark</td>
+        <td>Otto</td>
+        <td>@mdo</td>
+      </tr>
+      <tr>
+        <th scope="row">2</th>
+        <td>Jacob</td>
+        <td>Thornton</td>
+        <td>@fat</td>
+      </tr>
+      <tr>
+        <th scope="row">3</th>
+        <td colspan="2">Larry the Bird</td>
+        <td>@twitter</td>
+      </tr>
+    </tbody>
+  </table>
 
 
 
 
 
 
-<div>New text. Go to <a href="/about/">About</a></div>
+  <div>New text. Go to <a href="/about/">About</a></div>
 
 
-<img src="../assets/images/WII_Mobility_Slide.jpg">
-    </div>
+  <img src="../assets/images/WII_Mobility_Slide.jpg">
+</div>
