@@ -90,7 +90,8 @@ gulp.task('make:scripts', function () {
 
   return gulp.src([
       './node_modules/jquery/dist/jquery.js',
-      './node_modules/tether/dist/js/tether.js',    
+      './node_modules/tether/dist/js/tether.js',   
+      './node_modules/bootstrap/dist/js/bootstrap.js',
       config.assets.source + '/scripts/*.js'
     ], {
       since: cache.lastMtime('concatJS')
